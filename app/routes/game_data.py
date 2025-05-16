@@ -1,8 +1,8 @@
 from flask import jsonify, request, abort, Blueprint
 from app import db
 from app.models import Puzzle, Room, PlayerRoomProgress, GameProgress, Badge, PlayerBadge
-from app.routes import game_data_bp # Importe o Blueprint instanciado em routes/__init__.py
-from app.auth import token_required
+from app.routes import game_data_bp
+from app.auth_utils import token_required
 
 @game_data_bp.route('/puzzles', methods=['GET'])
 @token_required

@@ -2,8 +2,8 @@ from flask import Flask, jsonify
 from flask_migrate import Migrate
 from config import Config
 from app.db import db
-from app.auth import token_required, auth_bp
 from app.routes import main_bp, game_data_bp
+from app.routes.auth import auth_bp # Importe o novo auth_bp
 
 migrate = Migrate()
 
@@ -18,8 +18,7 @@ def create_app(config_class=Config):
 
     app.register_blueprint(main_bp)
     app.register_blueprint(game_data_bp)
-
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(auth_bp, url_prefix='/auth') # Registre o auth_bp com o prefixo /auth
 
     @app.errorhandler(400)
     def bad_request(e):
