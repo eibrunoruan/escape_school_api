@@ -25,6 +25,43 @@ class Player(db.Model):
             'updated_at': self.updated_at.isoformat()
         }
 
+class Item(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.Text)
+    type = db.Column(db.String(50)) # Ex: 'chave', 'ferramenta', 'consumivel'
+    properties = db.Column(db.JSON) # Para armazenar propriedades específicas do item (ex: qual porta a chave abre, se a lanterna está ligada)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'type': self.type,
+            'properties': self.properties,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
+
+class PlayerItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
+    quantity = db.Column(db.Integer, default=1)
+    acquired_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    db.UniqueConstraint('player_id', 'item_id', name='unique_player_item')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'player_id': self.player_id,
+            'item_id': self.item_id,
+            'quantity': self.quantity,
+            'acquired_at': self.acquired_at.isoformat()
+        }
+
 class Puzzle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -156,3 +193,5 @@ class PlayerBadge(db.Model):
             'badge_id': self.badge_id,
             'awarded_at': self.awarded_at.isoformat()
         }
+
+
