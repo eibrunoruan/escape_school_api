@@ -3,13 +3,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False, unique=True)
-    password_hash = db.Column(db.String(128))
+    name = db.Column(db.String(80), nullable=False)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    password_hash = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
     game_progress = db.relationship('GameProgress', backref='player', uselist=False)
     room_progress = db.relationship('PlayerRoomProgress', backref='player')
     badges = db.relationship('PlayerBadge', backref='player')
+    is_admin = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -22,7 +24,8 @@ class Player(db.Model):
             'id': self.id,
             'name': self.name,
             'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'updated_at': self.updated_at.isoformat(),
+            'is_admin': self.is_admin
         }
 
 class Item(db.Model):
@@ -106,7 +109,7 @@ class RoomPuzzle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
     puzzle_id = db.Column(db.Integer, db.ForeignKey('puzzle.id'))
-    order = db.Column(db.Integer) # Para definir a ordem dos enigmas na sala
+    order = db.Column(db.Integer)
     db.UniqueConstraint('room_id', 'puzzle_id', name='unique_room_puzzle')
 
 class PlayerRoomProgress(db.Model):
@@ -115,7 +118,7 @@ class PlayerRoomProgress(db.Model):
     room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
     start_time = db.Column(db.DateTime, default=db.func.current_timestamp())
     end_time = db.Column(db.DateTime)
-    time_spent = db.Column(db.Integer) # em segundos
+    time_spent = db.Column(db.Integer)
     puzzles_solved = db.relationship('PlayerRoomPuzzle', backref='player_room_progress')
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
@@ -164,7 +167,7 @@ class Badge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False, unique=True)
     description = db.Column(db.String(255))
-    rule = db.Column(db.String(255)) # Ex: 'puzzles_solved >= 1'
+    rule = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
     players = db.relationship('PlayerBadge', backref='badge')

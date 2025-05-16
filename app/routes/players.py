@@ -7,63 +7,45 @@ from app.auth_utils import token_required
 @main_bp.route('/players', methods=['GET'])
 @token_required
 def get_players(current_user):
-    player_id = request.args.get('player_id')
-
+    player_id = request.args.get('player_id', type=int)
     if player_id:
-        try:
-            player = Player.query.get_or_404(player_id)
-            return jsonify(player.to_dict()), 200
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-    else:
-        try:
-            players = Player.query.all()
-            return jsonify([player.to_dict() for player in players]), 200
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-@main_bp.route('/players', methods=['POST'])
-@token_required # Apenas usuários autenticados (ex: admins) podem criar jogadores
-def create_player(current_user):
-    try:
-        data = request.get_json() or {}
-        if 'name' not in data:
-            return jsonify({'error': 'Name is required'}), 400
-        if Player.query.filter_by(name=data['name']).first():
-            return jsonify({'error': 'Player name already exists'}), 400
-
-        new_player = Player(name=data['name'])
-        db.session.add(new_player)
-        db.session.commit()
-
-        return jsonify(new_player.to_dict()), 201
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@main_bp.route('/players/<int:id>', methods=['PUT'])
-@token_required
-def update_player(current_user, id):
-    try:
-        player = Player.query.get_or_404(id)
-        data = request.get_json() or {}
-
-        if 'name' in data:
-            if Player.query.filter_by(name=data['name']).filter(Player.id != id).first():
-                return jsonify({'error': 'Player name already exists'}), 400
-            player.name = data['name']
-
-        db.session.commit()
+        player = Player.query.get_or_404(player_id)
         return jsonify(player.to_dict()), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    else:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        players = Player.query.paginate(page=page, per_page=per_page)
+        result = [p.to_dict() for p in players.items]
+        return jsonify({
+            'jogadores': result,
+            'total': players.total,
+            'paginas': players.pages,
+            'pagina_atual': players.page
+        }), 200
 
-@main_bp.route('/players/<int:id>', methods=['DELETE'])
+@main_bp.route('/players/<int:player_id>', methods=['PUT'])
 @token_required
-def delete_player(current_user, id):
-    try:
-        player = Player.query.get_or_404(id)
-        db.session.delete(player)
-        db.session.commit()
-        return jsonify({'message': f'Player with id {id} deleted successfully'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def update_player(current_user, player_id):
+    player_to_update = Player.query.get_or_404(player_id)
+    if current_user.id != player_to_update.id:
+        abort(403, description="Você não tem permissão para atualizar este jogador.")
+
+    data = request.get_json() or {}
+
+    for key, value in data.items():
+        if hasattr(player_to_update, key):
+            setattr(player_to_update, key, value)
+
+    db.session.commit()
+    return jsonify(player_to_update.to_dict()), 200
+
+@main_bp.route('/players/<int:player_id>', methods=['DELETE'])
+@token_required
+def delete_player(current_user, player_id):
+    player_to_delete = Player.query.get_or_404(player_id)
+    if current_user.id != player_to_delete.id:
+        abort(403, description="Você não tem permissão para deletar este jogador.")
+
+    db.session.delete(player_to_delete)
+    db.session.commit()
+    return jsonify({'message': f'Jogador com id {player_id} excluído com sucesso'}), 200
