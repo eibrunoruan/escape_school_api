@@ -29,8 +29,8 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
     description = db.Column(db.Text)
-    type = db.Column(db.String(50)) # Ex: 'chave', 'ferramenta', 'consumivel'
-    properties = db.Column(db.JSON) # Para armazenar propriedades específicas do item (ex: qual porta a chave abre, se a lanterna está ligada)
+    type = db.Column(db.String(50))
+    properties = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
